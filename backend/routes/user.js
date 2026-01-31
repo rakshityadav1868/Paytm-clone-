@@ -4,43 +4,46 @@ const {User, Account}=require("../db.js"); //sirf user property access krni hai 
 const {z} =require("zod")
 const JWT_SECRET=require("../config.js")
 const {authMiddleware}=require("../middleware.js")
+const jwt = require("jsonwebtoken");
 
 //route for signup
 const signupschema= z.object({
-    username :z.string().trim().email(),
+    username :z.string().trim(),
     password: z.string().trim(),
     firstName: z.string().trim(),
     lastName: z.string().trim()
 })
 
 router.post("/signup",async(req,res)=>{
-    //safeParse krta hai jo bhi data phele direct schema ke through hoke jata abb vo signupschema ke through hoke jayega
+    // safeParse krta hai jo bhi data phele direct schema ke through hoke jata abb vo signupschema ke through hoke jayega
+    console.log(req.body)
     const {data}= signupschema.safeParse(req.body)
     if (!data){
+        
         return res.status(411).json({message: "Email already taken/Invalid inputs"})
     }
-    const existinguser= User.findOne({
-        username:req.body.username
+    const existinguser= await User.findOne({
+        username:req.body.username,
     })
     if(existinguser){
-        return res.status(411),json({message: "Username already exists"})
+        return res.status(411).json({message: "Username already exists"})
     }
-    const user =User.create({
+    const user = await User.create({
         username: req.body.username,
         password: req.body.password,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
     })
+    const userid=user._id
     await Account.create({
         userid,
         balance: 1 + Math.random() * 10000
     })
-    const userid=user._id
     const token = jwt.sign({
         userid
     },JWT_SECRET)
 
-    res.json({messgae:"user created sucessfully"})
+    res.json({message:"user created sucessfully"})
 
 })
 
@@ -50,12 +53,12 @@ const loginschema = z.object({
     password: z.string().trim()
 })
 
-router.post("/signin",(req,res)=>{
+router.post("/signin",async(req,res)=>{
      const {data}= loginschema.safeParse(req.body)
      if (!data){
-        res.status(411).json({message:"Email does not exists"})
+        return res.status(411).json({message:"Email does not exists"})
      }
-     const user =User.create({
+     const user = await User.findOne({
         username: req.body.username,
         password: req.body.password,
     })
@@ -81,12 +84,12 @@ const updateuserschema=z.object({
     lastName: z.string().trim().optional()
 })
 
-router.put("/",authMiddleware,async (res,req)=>{
+router.put("/",authMiddleware,async (req,res)=>{
     const {data}=updateuserschema.safeParse(req.body)
     if (!data){
-        res.status(411).json({messgae: "error while updating"})
+        return res.status(411).json({messgae: "error while updating"})
     }
-    await User.updateOne({_id:req.id})
+    await User.updateOne({_id:req.userid},data)
     res.json({message:"user updated sucesfully"})
 })
 
@@ -106,12 +109,12 @@ router.get("/bulk",async(req,res)=>{
         }]
     })
     res.json({
-        user: users.map(user=>{
-            username : user.username;
-            firstName: user.firstName;
-            lastName: user.lastName;
+        user: users.map(user=>({
+            username : user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
             _id: user._id
-        })
+        }))
     })
 })
 module.exports=router

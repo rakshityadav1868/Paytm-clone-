@@ -5,6 +5,7 @@ const cors = require("cors")
 
 app.use(cors())
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
 
 // api/v1=route prefix
 //this means jo bhi request /api/v1 se hogi usko router dedo
