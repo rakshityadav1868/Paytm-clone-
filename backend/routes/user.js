@@ -1,17 +1,19 @@
 const express = require("express");
 const router =express.Router();
-const {User}=require("../db.js"); //sirf user property access krni hai isliye aisa likha.{}
-const zod =require("zod")
+const {User, Account}=require("../db.js"); //sirf user property access krni hai isliye aisa likha.{}
+const {z} =require("zod")
 const JWT_SECRET=require("../config.js")
+const {authMiddleware}=require("../middleware.js")
 
-const signupschema= zod.object({
-    username :zod.string().trim().email(),
-    password: zod.string().trim(),
-    firstName: zod.string().trim(),
-    lastName: zod.string().trim()
+//route for signup
+const signupschema= z.object({
+    username :z.string().trim().email(),
+    password: z.string().trim(),
+    firstName: z.string().trim(),
+    lastName: z.string().trim()
 })
 
-router.post("/signup",(req,res)=>{
+router.post("/signup",async(req,res)=>{
     //safeParse krta hai jo bhi data phele direct schema ke through hoke jata abb vo signupschema ke through hoke jayega
     const {data}= signupschema.safeParse(req.body)
     if (!data){
@@ -26,10 +28,13 @@ router.post("/signup",(req,res)=>{
     const user =User.create({
         username: req.body.username,
         password: req.body.password,
-        firstNmae: req.body.firstName,
+        firstName: req.body.firstName,
         lastName: req.body.lastName,
     })
-
+    await Account.create({
+        userid,
+        balance: 1 + Math.random() * 10000
+    })
     const userid=user._id
     const token = jwt.sign({
         userid
@@ -39,9 +44,10 @@ router.post("/signup",(req,res)=>{
 
 })
 
-const loginschema = zod.object({
-    username: zod.string().email(),
-    password: zod.string().trim()
+// route for login 
+const loginschema = z.object({
+    username: z.string().email(),
+    password: z.string().trim()
 })
 
 router.post("/signin",(req,res)=>{
@@ -64,5 +70,48 @@ router.post("/signin",(req,res)=>{
 res.status(411).json({
     message: "error while logging in"
 })
+})
+
+
+// to update user information
+const updateuserschema=z.object({
+    username: z.string().trim().optional(),
+    password: z.string().trim().optional(),
+    firstName: z.string().trim().optional(),
+    lastName: z.string().trim().optional()
+})
+
+router.put("/",authMiddleware,async (res,req)=>{
+    const {data}=updateuserschema.safeParse(req.body)
+    if (!data){
+        res.status(411).json({messgae: "error while updating"})
+    }
+    await User.updateOne({_id:req.id})
+    res.json({message:"user updated sucesfully"})
+})
+
+// to get username from backend whike filtering 
+router.get("/bulk",async(req,res)=>{
+    const filter = req.query.filter || ""; // || "" isliye kyuki regex ko undefined psnd nhi hai orr req.query.filter se jo type kr rhe hai vo nikal rhe hai databse se
+    // ye mql ka syntax hai need to learn 
+     const users = await User.find({
+        $or: [{
+            firstName: {
+                "$regex": filter
+            }
+        }, {
+            lastName: {
+                "$regex": filter
+            }
+        }]
+    })
+    res.json({
+        user: users.map(user=>{
+            username : user.username;
+            firstName: user.firstName;
+            lastName: user.lastName;
+            _id: user._id
+        })
+    })
 })
 module.exports=router

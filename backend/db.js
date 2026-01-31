@@ -8,8 +8,21 @@ const UserSchema= new mongoose.Schema({
     lastName:String,
 })
 
+// creating a account balance database
+const accschema= new mongoose.Schema({
+    userid:{
+        type: String,
+        required: true
+    },
+    balance:{
+        type: Number,
+        required: true
+    }
+})
+const Account = mongoose.model("Account",accschema)
 const User=  mongoose.model("User",UserSchema)
 
 module.exports={
-    User
+    User,
+    Account
 }
