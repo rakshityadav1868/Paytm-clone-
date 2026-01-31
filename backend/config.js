@@ -1,4 +1,4 @@
 // abhi learn krna hai jwt secret
 module.export={
-    JWT_SECRET:"TarunyaRandi"
+    JWT_SECRET:"xyz"
 }
