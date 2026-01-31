@@ -4,14 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
     "mongoose": "^8.1.0",
-    "zod": "^3.22.4"
+    "z": "^3.22.4"
   }
 }
