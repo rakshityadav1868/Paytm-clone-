@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const app=express();
 const router =require("./routes/index.js")
@@ -11,6 +12,8 @@ app.use(express.urlencoded({ extended: true }));
 //this means jo bhi request /api/v1 se hogi usko router dedo
 app.use("/api/v1",router)
 
-app.listen(3000,()=>{
-    console.log("serve started")
-})
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
