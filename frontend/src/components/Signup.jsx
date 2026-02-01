@@ -19,6 +19,7 @@ export default function Signup() {
             })
             // token save
             localStorage.setItem("token",response.data.token)
+            localStorage.setItem("username",response.data.username)
             //navigate
             navigate("/dashboard")
         }catch(err){

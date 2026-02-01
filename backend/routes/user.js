@@ -34,7 +34,7 @@ router.post("/signup",async(req,res)=>{
             firstName: req.body.firstName,
             lastName: req.body.lastName,
         })
-        const userid=user._id
+        const userid = user._id.toString()  // Convert ObjectId to string
         await Account.create({
             userid,
             balance: 1 + Math.random() * 10000
@@ -65,12 +65,12 @@ router.post("/signin",async(req,res)=>{
         username: req.body.username,
         password: req.body.password,
     })
-    const userid=user._id
+    const userid = user._id.toString()  // Convert ObjectId to string
     if (user){
     const token = jwt.sign({
         userid
     },JWT_SECRET)
-    res.json({message: "login sucessful", token})
+    res.json({message: "login sucessful", token, username: user.firstName})
     return // return krna jruri hai kyuki second response bhejne ki try krega toh function khtm krne ke liye jruri hai
     }
     res.status(411).json({
@@ -112,7 +112,7 @@ router.get("/bulk",async(req,res)=>{
         }]
     })
     res.json({
-        user: users.map(user=>({
+        users: users.map(user=>({
             username : user.username,
             firstName: user.firstName,
             lastName: user.lastName,
@@ -120,4 +120,14 @@ router.get("/bulk",async(req,res)=>{
         }))
     })
 })
+
+// Logout route
+router.post("/logout", authMiddleware, async (req, res) => {
+    // In JWT, logout is handled on frontend by clearing the token
+    // Backend just acknowledges the logout request
+    res.json({
+        message: "Logged out successfully"
+    });
+});
+
 module.exports=router

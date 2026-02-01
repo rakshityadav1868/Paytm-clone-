@@ -1,22 +1,48 @@
 import React, { useState } from 'react'
 import api from "../services/api.js"
 import { useEffect } from 'react'
+import {useNavigate } from 'react-router-dom'
 
 export default function Dashboard() {
+    const navigate =useNavigate()
   const [users, SetUser]=useState([])
   const [filter,Setfilter]=useState("")
+  const [balance,setBalance]=useState(0)
+  const username = localStorage.getItem("username") || "User"
+
+  const handleLogout = () => {
+    // Clear localStorage
+    localStorage.removeItem("token")
+    localStorage.removeItem("username")
+    // Navigate to signin
+    navigate("/")
+  }
 
   useEffect(()=>{
     const fetchuser= async ()=>{
         try{
             const res= await api.get(`/user/bulk?filter=${filter}`)
-            SetUser(res.data.user)
+            SetUser(res.data.users)
         }catch(err){
             console.log(err)
         }
     }
     fetchuser()
   },[filter])
+  useEffect(()=>{
+    const fetchbalance=async()=>{
+        try{
+            const res = await api.get(`/account/balance`)
+            setBalance(res.data.balance)
+        }catch(err){
+            console.log(err)
+        }
+    }
+    fetchbalance()
+  },[])
+  const handleSendMoney=(user)=>{
+    navigate(`/send?id=${user._id}&name=${user.firstName}`)
+  }
 
   return (
     <div className="min-h-screen bg-white p-8">
@@ -24,15 +50,23 @@ export default function Dashboard() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Payments App</h1>
         <div className="flex items-center gap-4">
-          <span className="text-lg">Hello, User</span>
-          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center font-bold">U</div>
+          <span className="text-lg">Hello, {username}</span>
+          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center font-bold">
+            {username.charAt(0).toUpperCase()}
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-semibold"
+          >
+            Logout
+          </button>
         </div>
       </div>
 
       {/* Balance Section */}
       <div className="mb-8">
         <div className="text-2xl font-bold">
-          Your Balance <span className="ml-4">$5000</span>
+          Your Balance <span className="ml-4">{balance}</span>
         </div>
       </div>
 
@@ -59,7 +93,7 @@ export default function Dashboard() {
               </p>
               <p className="text-sm text-gray-500">{user.username}</p>
               </div>
-              <button className="bg-black text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-800 transition">
+              <button onClick={() => handleSendMoney(user)} className="bg-black text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-800 transition">
                 Send Money
               </button>
             </div>
