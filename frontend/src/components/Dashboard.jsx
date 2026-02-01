@@ -1,13 +1,22 @@
 import React, { useState } from 'react'
+import api from "../services/api.js"
+import { useEffect } from 'react'
 
 export default function Dashboard() {
-  const [searchFilter, setSearchFilter] = useState("")
+  const [users, SetUser]=useState([])
+  const [filter,Setfilter]=useState("")
 
-  const users = [
-    { id: "U1", name: "User 1" },
-    { id: "U2", name: "User 2" },
-    { id: "U3", name: "User 3" },
-  ]
+  useEffect(()=>{
+    const fetchuser= async ()=>{
+        try{
+            const res= await api.get(`/user/bulk?filter=${filter}`)
+            SetUser(res.data.user)
+        }catch(err){
+            console.log(err)
+        }
+    }
+    fetchuser()
+  },[filter])
 
   return (
     <div className="min-h-screen bg-white p-8">
@@ -35,18 +44,20 @@ export default function Dashboard() {
         <input
           type="text"
           placeholder="Search users..."
-          value={searchFilter}
-          onChange={(e) => setSearchFilter(e.target.value)}
+          value={filter}
+          onChange={(e) =>  Setfilter(e.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-gray-400"
         />
 
         {/* Users List */}
         <div className="space-y-4">
           {users.map((user) => (
-            <div key={user.id} className="flex justify-between items-center p-4 border border-gray-200 rounded-lg">
+            <div key={user._id} className="flex justify-between items-center p-4 border border-gray-200 rounded-lg">
               <div>
-                <span className="text-gray-600 mr-4">{user.id}</span>
-                <span className="font-semibold text-lg">{user.name}</span>
+                <p className="font-semibold">
+                {user.firstName} {user.lastName}
+              </p>
+              <p className="text-sm text-gray-500">{user.username}</p>
               </div>
               <button className="bg-black text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-800 transition">
                 Send Money

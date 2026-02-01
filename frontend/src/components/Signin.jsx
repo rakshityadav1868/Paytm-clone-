@@ -1,17 +1,34 @@
 import React from 'react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import api from "../services/api.js"
 
 export default function Signin() {
     const [username,SetUsername]=useState("")
     const [password,SetPassword]=useState("")
+    const navigate=useNavigate();
+    const handlesignin=async(e)=>{
+        e.preventDefault();
+        try{
+            const response = await api.post("/user/signin",{
+                username,
+                password
+            })
+            //token save 
+            localStorage.setItem("token", response.data.token)
+            //navigate
+            navigate("/dashboard")
+        }catch(err){
+            console.log(err)
+            }
+    }
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-400">
       <div className="bg-white rounded-lg p-10 w-full max-w-md shadow-lg">
         <h1 className="text-3xl font-bold text-center mb-2">Sign In</h1>
         <p className="text-gray-500 text-center mb-8">Enter your credentials to login</p>
         
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handlesignin}>
           <div>
             <label className="block text-sm font-semibold mb-2">Email</label>
             <input
