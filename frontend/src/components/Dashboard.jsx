@@ -1,105 +1,121 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from "../services/api.js"
-import { useEffect } from 'react'
-import {useNavigate } from 'react-router-dom'
+import "./Dashboard.css"
 
 export default function Dashboard() {
-    const navigate =useNavigate()
-  const [users, SetUser]=useState([])
-  const [filter,Setfilter]=useState("")
-  const [balance,setBalance]=useState(0)
-  const username = localStorage.getItem("username") || "User"
+    const navigate = useNavigate()
+    const [users, SetUser] = useState([])
+    const [filter, Setfilter] = useState("")
+    const [balance, setBalance] = useState(0)
+    const username = localStorage.getItem("username") || "User"
+    const firstName = localStorage.getItem("firstName") || username
 
-  const handleLogout = () => {
-    // Clear localStorage
-    localStorage.removeItem("token")
-    localStorage.removeItem("username")
-    // Navigate to signin
-    navigate("/")
-  }
-
-  useEffect(()=>{
-    const fetchuser= async ()=>{
-        try{
-            const res= await api.get(`/user/bulk?filter=${filter}`)
-            SetUser(res.data.users)
-        }catch(err){
-            console.log(err)
-        }
+    const handleLogout = () => {
+        localStorage.removeItem("token")
+        localStorage.removeItem("username")
+        navigate("/")
     }
-    fetchuser()
-  },[filter])
-  useEffect(()=>{
-    const fetchbalance=async()=>{
-        try{
-            const res = await api.get(`/account/balance`)
-            setBalance(res.data.balance)
-        }catch(err){
-            console.log(err)
+
+    useEffect(() => {
+        const fetchuser = async () => {
+            try {
+                const res = await api.get(`/user/bulk?filter=${filter}`)
+                // Filter out current user - only show other users
+                const loggedInUser = localStorage.getItem("username")
+                console.log("Logged in user:", loggedInUser)
+                console.log("All users from API:", res.data.users)
+                const filteredUsers = res.data.users.filter(user => {
+                    console.log(`Comparing: "${user.username}" !== "${loggedInUser}" = ${user.username !== loggedInUser}`)
+                    return user.username !== loggedInUser
+                })
+                console.log("Filtered users:", filteredUsers)
+                SetUser(filteredUsers)
+            } catch (err) {
+                console.log(err)
+            }
         }
+        fetchuser()
+    }, [filter])
+
+    useEffect(() => {
+        const fetchbalance = async () => {
+            try {
+                const res = await api.get(`/account/balance`)
+                setBalance(res.data.balance)
+            } catch (err) {
+                console.log(err)
+            }
+        }
+        fetchbalance()
+    }, [])
+
+    const handleSendMoney = (user) => {
+        navigate(`/send?id=${user._id}&name=${user.firstName}`)
     }
-    fetchbalance()
-  },[])
-  const handleSendMoney=(user)=>{
-    navigate(`/send?id=${user._id}&name=${user.firstName}`)
-  }
 
-  return (
-    <div className="min-h-screen bg-white p-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Payments App</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-lg">Hello, {username}</span>
-          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center font-bold">
-            {username.charAt(0).toUpperCase()}
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-semibold"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
-
-      {/* Balance Section */}
-      <div className="mb-8">
-        <div className="text-2xl font-bold">
-          Your Balance <span className="ml-4">{balance}</span>
-        </div>
-      </div>
-
-      {/* Users Section */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Users</h2>
-        
-        {/* Search Bar */}
-        <input
-          type="text"
-          placeholder="Search users..."
-          value={filter}
-          onChange={(e) =>  Setfilter(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-gray-400"
-        />
-
-        {/* Users List */}
-        <div className="space-y-4">
-          {users.map((user) => (
-            <div key={user._id} className="flex justify-between items-center p-4 border border-gray-200 rounded-lg">
-              <div>
-                <p className="font-semibold">
-                {user.firstName} {user.lastName}
-              </p>
-              <p className="text-sm text-gray-500">{user.username}</p>
-              </div>
-              <button onClick={() => handleSendMoney(user)} className="bg-black text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-800 transition">
-                Send Money
-              </button>
+    return (
+        <div className="dashboard-container">
+            {/* Header */}
+            <div className="dashboard-header">
+                <h1 className="app-title">Payments App</h1>
+                <div className="user-menu">
+                    <span className="user-greeting">Hello, {firstName}</span>
+                    <div className="user-avatar">
+                        {firstName.charAt(0).toUpperCase()}
+                    </div>
+                    <button onClick={handleLogout} className="logout-btn">
+                        Logout
+                    </button>
+                </div>
             </div>
-          ))}
+
+            <div className="dashboard-content">
+                {/* Balance Section */}
+                <div className="balance-card">
+                    <span className="balance-label">Your Balance</span>
+                    <div className="balance-amount">₹ {balance}</div>
+                </div>
+
+                {/* Users Section */}
+                <div className="users-section">
+                    <h2 className="users-section-title">Users</h2>
+
+                    {/* Search Bar */}
+                    <input
+                        type="text"
+                        placeholder="Search users..."
+                        value={filter}
+                        onChange={(e) => Setfilter(e.target.value)}
+                        className="search-input"
+                    />
+
+                    {/* Users List */}
+                    <div className="users-list">
+                        {users.map((user) => (
+                            <div key={user._id} className="user-card">
+                                <div className="user-info-left">
+                                    <div className="user-avatar">
+                                        {user.firstName.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="user-details">
+                                        <h3 className="user-name">
+                                            {user.firstName} {user.lastName}
+                                        </h3>
+                                        <p className="user-email">{user.username}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => handleSendMoney(user)}
+                                    className="send-money-btn"
+                                >
+                                    Send Money
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  )
+    )
 }

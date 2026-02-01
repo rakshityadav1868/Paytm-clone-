@@ -2,70 +2,104 @@ import React from 'react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from "../services/api.js"
+import "./Signin.css"
 
 export default function Signin() {
-    const [username,SetUsername]=useState("")
-    const [password,SetPassword]=useState("")
-    const navigate=useNavigate();
-    const handlesignin=async(e)=>{
+    const [username, SetUsername] = useState("")
+    const [password, SetPassword] = useState("")
+    const [loading, setLoading] = useState(false)
+    const navigate = useNavigate();
+    
+    const handlesignin = async (e) => {
         e.preventDefault();
-        try{
-            const response = await api.post("/user/signin",{
+        
+        if (!username || !password) {
+            alert("Please fill in all fields");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await api.post("/user/signin", {
                 username,
                 password
             })
-            //token save 
             localStorage.setItem("token", response.data.token)
             localStorage.setItem("username", response.data.username)
-            //navigate
+            localStorage.setItem("firstName", response.data.firstName)
             navigate("/dashboard")
-        }catch(err){
+        } catch (err) {
             console.log(err)
-            }
+            alert("Sign in failed: " + (err.response?.data?.message || "Invalid credentials"))
+        } finally {
+            setLoading(false)
+        }
     }
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-400">
-      <div className="bg-white rounded-lg p-10 w-full max-w-md shadow-lg">
-        <h1 className="text-3xl font-bold text-center mb-2">Sign In</h1>
-        <p className="text-gray-500 text-center mb-8">Enter your credentials to login</p>
-        
-        <form className="space-y-4" onSubmit={handlesignin}>
-          <div>
-            <label className="block text-sm font-semibold mb-2">Email</label>
-            <input
-              type="email"
-              placeholder="johndoe@example.com"
-              name="username"
-              onChange={(e)=>SetUsername(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-              required
-            />
-          </div>
 
-          <div>
-            <label className="block text-sm font-semibold mb-2">Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              name="password"
-              onChange={(e)=>SetPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-              required
-            />
-          </div>
+    return (
+        <div className="signin-container">
+            <div className="signin-card">
+                {/* Header */}
+                <div className="signin-header">
+                    <h1 className="signin-title">Sign In</h1>
+                    <p className="signin-subtitle">Welcome back to your account</p>
+                </div>
 
-          <button 
-            type="submit"
-            className="w-full bg-black text-white py-2 rounded-lg font-semibold hover:bg-gray-800 transition mt-6"
-          >
-            Sign In
-          </button>
-        </form>
+                {/* Form */}
+                <form className="signin-form" onSubmit={handlesignin}>
+                    {/* Email */}
+                    <div className="signin-form-group">
+                        <label className="signin-label">Email</label>
+                        <input
+                            type="email"
+                            placeholder="you@example.com"
+                            value={username}
+                            onChange={(e) => SetUsername(e.target.value)}
+                            className="signin-input"
+                            required
+                        />
+                    </div>
 
-        <p className="text-center mt-6 text-sm">
-          Don't have an account? <Link to="/signup" className="font-semibold underline">Sign up</Link>
-        </p>
-      </div>
-    </div>
-  )
+                    {/* Password */}
+                    <div className="signin-form-group">
+                        <label className="signin-label">Password</label>
+                        <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => SetPassword(e.target.value)}
+                            className="signin-input"
+                            required
+                        />
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="signin-button"
+                    >
+                        {loading ? "Signing in..." : "Sign In"}
+                    </button>
+                </form>
+
+                {/* Divider */}
+                <div className="signin-divider">
+                    <div className="signin-divider-line"></div>
+                    <span className="signin-divider-text">OR</span>
+                    <div className="signin-divider-line"></div>
+                </div>
+
+                {/* Signup Link */}
+                <div className="signin-footer">
+                    <p className="signin-footer-text">
+                        Don't have an account?{" "}
+                        <Link to="/signup" className="signin-link">
+                            Sign Up
+                        </Link>
+                    </p>
+                </div>
+            </div>
+        </div>
+    )
 }

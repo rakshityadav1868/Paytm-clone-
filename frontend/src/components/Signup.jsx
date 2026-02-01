@@ -1,95 +1,135 @@
-import  { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from "../services/api.js"
+import "./Signup.css"
+
 export default function Signup() {
-    const [firstName,SetfirstName]=useState("")
-    const [lastName,SetlastName]=useState("")
-    const [username,SetUsername]=useState("")
-    const [password,SetPassword]=useState("")
+    const [firstName, SetfirstName] = useState("")
+    const [lastName, SetlastName] = useState("")
+    const [username, SetUsername] = useState("")
+    const [password, SetPassword] = useState("")
+    const [loading, setLoading] = useState(false)
     
-    const navigate= useNavigate();
-    const handleSubmit=async(e)=>{
+    const navigate = useNavigate();
+    
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        try{
-            const response= await api.post("/user/signup",{
+        
+        if (!firstName || !lastName || !username || !password) {
+            alert("All fields are required");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await api.post("/user/signup", {
                 username,
                 password,
                 firstName,
                 lastName
             })
-            // token save
-            localStorage.setItem("token",response.data.token)
-            localStorage.setItem("username",response.data.username)
-            //navigate
+            localStorage.setItem("token", response.data.token)
+            localStorage.setItem("username", username)
+            localStorage.setItem("firstName", firstName)
             navigate("/dashboard")
-        }catch(err){
+        } catch (err) {
             console.log(err)
-            alert("sign up failed")
+            alert("Sign up failed: " + (err.response?.data?.message || "Unknown error"))
+        } finally {
+            setLoading(false)
         }
     }
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-400">
-      <div className="bg-white rounded-lg p-10 w-full max-w-md shadow-lg">
-        <h1 className="text-3xl font-bold text-center mb-2">Sign Up</h1>
-        <p className="text-gray-500 text-center mb-8">Enter your information to create an account</p>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label className="block text-sm font-semibold mb-2">First Name</label>
-            <input
-              type="text"
-              placeholder="John"
-              name="firstName"
-              onChange={(e)=>
-                SetfirstName(e.target.value)
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold mb-2">Last Name</label>
-            <input
-              type="text"
-              placeholder="Doe"
-              name="lastName"
-              onChange={(e)=>SetlastName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold mb-2">Email</label>
-            <input
-              type="email"
-              placeholder="johndoe@example.com"
-              name="username"
-              onChange={(e)=>SetUsername(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold mb-2">Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              name="password"
-              onChange={(e)=>SetPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-              required
-            />
-          </div>
-          <button 
-            type="submit"
-            className="w-full bg-black text-white py-2 rounded-lg font-semibold hover:bg-gray-800 transition mt-6"
-          >
-            Sign Up
-          </button>
-        </form>
-        <p className="text-center mt-6 text-sm">
-          Already have an account? <Link to="/signin" className="font-semibold underline">Login</Link>
-        </p>
-      </div>
-    </div>
-  )
+
+    return (
+        <div className="signup-container">
+            <div className="signup-card">
+                {/* Header */}
+                <div className="signup-header">
+                    <h1 className="signup-title">Sign Up</h1>
+                    <p className="signup-subtitle">Create your account to get started</p>
+                </div>
+
+                {/* Form */}
+                <form className="signup-form" onSubmit={handleSubmit}>
+                    {/* First Name */}
+                    <div className="signup-form-group">
+                        <label className="signup-label">First Name</label>
+                        <input
+                            type="text"
+                            placeholder="John"
+                            value={firstName}
+                            onChange={(e) => SetfirstName(e.target.value)}
+                            className="signup-input"
+                            required
+                        />
+                    </div>
+
+                    {/* Last Name */}
+                    <div className="signup-form-group">
+                        <label className="signup-label">Last Name</label>
+                        <input
+                            type="text"
+                            placeholder="Doe"
+                            value={lastName}
+                            onChange={(e) => SetlastName(e.target.value)}
+                            className="signup-input"
+                            required
+                        />
+                    </div>
+
+                    {/* Email */}
+                    <div className="signup-form-group">
+                        <label className="signup-label">Email</label>
+                        <input
+                            type="email"
+                            placeholder="you@example.com"
+                            value={username}
+                            onChange={(e) => SetUsername(e.target.value)}
+                            className="signup-input"
+                            required
+                        />
+                    </div>
+
+                    {/* Password */}
+                    <div className="signup-form-group">
+                        <label className="signup-label">Password</label>
+                        <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => SetPassword(e.target.value)}
+                            className="signup-input"
+                            required
+                        />
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="signup-button"
+                    >
+                        {loading ? "Creating Account..." : "Sign Up"}
+                    </button>
+                </form>
+
+                {/* Divider */}
+                <div className="signup-divider">
+                    <div className="signup-divider-line"></div>
+                    <span className="signup-divider-text">OR</span>
+                    <div className="signup-divider-line"></div>
+                </div>
+
+                {/* Footer */}
+                <div className="signup-footer">
+                    <p className="signup-footer-text">
+                        Already have an account?{" "}
+                        <Link to="/" className="signup-link">
+                            Sign In
+                        </Link>
+                    </p>
+                </div>
+            </div>
+        </div>
+    )
 }
