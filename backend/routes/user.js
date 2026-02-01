@@ -2,7 +2,7 @@ const express = require("express");
 const router =express.Router();
 const {User, Account}=require("../db.js"); //sirf user property access krni hai isliye aisa likha.{}
 const {z} =require("zod")
-const JWT_SECRET=require("../config.js")
+const {JWT_SECRET}=require("../config.js")
 const {authMiddleware}=require("../middleware.js")
 const jwt = require("jsonwebtoken");
 
@@ -15,36 +15,39 @@ const signupschema= z.object({
 })
 
 router.post("/signup",async(req,res)=>{
-    // safeParse krta hai jo bhi data phele direct schema ke through hoke jata abb vo signupschema ke through hoke jayega
-    console.log(req.body)
-    const {data}= signupschema.safeParse(req.body)
-    if (!data){
-        
-        return res.status(411).json({message: "Email already taken/Invalid inputs"})
-    }
-    const existinguser= await User.findOne({
-        username:req.body.username,
-    })
-    if(existinguser){
-        return res.status(411).json({message: "Username already exists"})
-    }
-    const user = await User.create({
-        username: req.body.username,
-        password: req.body.password,
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-    })
-    const userid=user._id
-    await Account.create({
-        userid,
-        balance: 1 + Math.random() * 10000
-    })
-    const token = jwt.sign({
-        userid
-    },JWT_SECRET)
+    try {
+        // safeParse krta hai jo bhi data phele direct schema ke through hoke jata abb vo signupschema ke through hoke jayega
 
-    res.json({message:"user created sucessfully"})
+        const {data}= signupschema.safeParse(req.body)
+        if (!data){
+            return res.status(411).json({message: "Email already taken/Invalid inputs"})
+        }
+        const existinguser= await User.findOne({
+            username:req.body.username,
+        })
+        if(existinguser){
+            return res.status(411).json({message: "Username already exists"})
+        }
+        const user = await User.create({
+            username: req.body.username,
+            password: req.body.password,
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+        })
+        const userid=user._id
+        await Account.create({
+            userid,
+            balance: 1 + Math.random() * 10000
+        })
+        const token = jwt.sign({
+            userid
+        },JWT_SECRET)
 
+        res.json({message:"user created sucessfully", token})
+    } catch(error){
+        console.error("Error",error)
+        return res.status(500).json({message: "error", error: error.message})
+    }
 })
 
 // route for login 
@@ -70,9 +73,9 @@ router.post("/signin",async(req,res)=>{
     res.json({message: "login sucessful", token})
     return // return krna jruri hai kyuki second response bhejne ki try krega toh function khtm krne ke liye jruri hai
     }
-res.status(411).json({
-    message: "error while logging in"
-})
+    res.status(411).json({
+        message: "error while logging in"
+    })
 })
 
 

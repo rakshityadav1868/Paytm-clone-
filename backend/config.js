@@ -1,1 +1,3 @@
-
+module.exports={
+    JWT_SECRET: "rakshit"
+}
