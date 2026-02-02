@@ -1,9 +1,18 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
+require("dotenv").config();
+const MONGO_URL = process.env.DATABASE_URL;
+console.log(process.env.DATABASE_URL);
+if (!MONGO_URL) {
+  throw new Error("DATABASE_URL is not defined");
+}
 
-// Connect to MongoDB with proper error handling
-mongoose.connect("mongodb://127.0.0.1:27017/paytm-app")
-    .then(() => console.log("MongoDB connected successfully"))
-    .catch(err => console.error("MongoDB connection error:", err))
+mongoose
+  .connect(MONGO_URL)
+  .then(() => console.log("MongoDB connected successfully"))
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 const UserSchema= new mongoose.Schema({
     username:String,
